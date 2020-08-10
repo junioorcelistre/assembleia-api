@@ -27,9 +27,6 @@ management:
 logging:
   file:
     name: application.log
-java:
-  runtime:
-    version: 11  
         
          
             
