@@ -13,7 +13,8 @@
 	<artifactId>assembleia</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>almoco-ui-1</name>
-	<description>Sistema para auxiliar na contabilização de votos das assembleias</description>
+	<description>Sistema para auxiliar na contabilização de votos das
+		assembleias</description>
 
 	<properties>
 		<java.version>11</java.version>

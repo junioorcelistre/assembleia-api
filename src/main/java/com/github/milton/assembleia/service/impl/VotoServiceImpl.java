@@ -5,9 +5,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.github.milton.assembleia.exception.RequestException;
+import com.github.milton.assembleia.model.dto.ResponseCpf;
 import com.github.milton.assembleia.model.entity.Pauta;
 import com.github.milton.assembleia.model.entity.Voto;
 import com.github.milton.assembleia.model.repository.AssociadoRepository;
@@ -27,12 +33,17 @@ public class VotoServiceImpl implements VotoService {
 	@Autowired
 	AssociadoRepository associadoRepository;
 
+	private static final String CPF_SERVICE = "https://user-info.herokuapp.com/users/{cpf}";
+
 	public Voto votar(Voto voto) {
 		if (pautaRepository.existsById(voto.getPauta().getId())) {
 			Pauta pauta = pautaRepository.getOne(voto.getPauta().getId());
 			if (pauta.getAtivacao().before(pauta.getEncerramento())) {
 				if (associadoRepository.existsById(voto.getAssociado().getId())) {
-					return votoRepository.save(voto);
+					if(validaCpf(voto.getAssociado().getCpf())) {
+						return votoRepository.save(voto);
+					}
+					throw new RequestException("O Associado não está apto para votar");
 				}
 				throw new RequestException("O Associado informado não foi encontrado");
 			}
@@ -54,4 +65,16 @@ public class VotoServiceImpl implements VotoService {
 
 		return resultado;
 	}
+
+	private boolean validaCpf(String cpf) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Accept", "application/json");
+		RestTemplate restTemplate = new RestTemplate();
+		ResponseEntity<ResponseCpf> response = restTemplate.exchange(CPF_SERVICE, HttpMethod.GET, new HttpEntity(headers), ResponseCpf.class, cpf.replaceAll("[^0-9]", ""));
+		System.out.println(response.getBody());
+		if (response.getBody().getStatus().equalsIgnoreCase("ABLE_TO_VOTE"))
+			return true;
+		return false;
+	}
+
 }
